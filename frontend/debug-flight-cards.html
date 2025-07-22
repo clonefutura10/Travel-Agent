@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Flight Cards</title>
+    <link rel="stylesheet" href="css/style.css?v=999" />
+    <link rel="stylesheet" href="css/booking.css?v=999" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body {
+            padding: 20px;
+            background: #f0f9ff;
+            font-family: Arial, sans-serif;
+        }
+        .debug-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .debug-info {
+            background: #e0f2fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #0ea5e9;
+        }
+        .debug-info h3 {
+            margin: 0 0 10px 0;
+            color: #0ea5e9;
+        }
+        .debug-info p {
+            margin: 5px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>Flight Cards Debug Test</h1>
+        
+        <div class="debug-info">
+            <h3>Debug Information</h3>
+            <p><strong>CSS Version:</strong> v999</p>
+            <p><strong>JS Version:</strong> v999</p>
+            <p><strong>Test Time:</strong> <span id="test-time"></span></p>
+            <p><strong>CSS Loaded:</strong> <span id="css-status">Checking...</span></p>
+            <p><strong>JS Functions:</strong> <span id="js-status">Checking...</span></p>
+        </div>
+
+        <div id="test-results">
+            <h2>Flight Cards Test Results:</h2>
+            <div id="flight-cards-container"></div>
+        </div>
+    </div>
+
+    <script src="js/api.js?v=999"></script>
+    <script src="js/booking.js?v=999"></script>
+    <script src="js/recommendations.js?v=999"></script>
+    <script>
+        // Debug information
+        document.getElementById('test-time').textContent = new Date().toLocaleString();
+        
+        // Check if CSS is loaded
+        function checkCSS() {
+            const testElement = document.createElement('div');
+            testElement.className = 'flight-card';
+            testElement.style.position = 'absolute';
+            testElement.style.left = '-9999px';
+            document.body.appendChild(testElement);
+            
+            const styles = window.getComputedStyle(testElement);
+            const hasGrid = styles.display === 'grid';
+            const hasBackground = styles.background !== 'rgba(0, 0, 0, 0)';
+            
+            document.body.removeChild(testElement);
+            
+            document.getElementById('css-status').textContent = 
+                hasGrid && hasBackground ? '✅ Loaded' : '❌ Not loaded properly';
+            
+            return hasGrid && hasBackground;
+        }
+        
+        // Check if JS functions are available
+        function checkJS() {
+            const hasCreateFlightCard = typeof createFlightCard === 'function';
+            const hasGetCurrencySymbol = typeof getCurrencySymbol === 'function';
+            const hasRecommendationsPage = typeof recommendationsPage !== 'undefined';
+            
+            document.getElementById('js-status').textContent = 
+                hasCreateFlightCard && hasGetCurrencySymbol ? '✅ Available' : 
+                hasRecommendationsPage ? '✅ Available (class method)' : '❌ Missing functions';
+            
+            return hasCreateFlightCard || hasRecommendationsPage;
+        }
+        
+        // Test flight cards
+        function testFlightCards() {
+            const container = document.getElementById('flight-cards-container');
+            
+            if (!checkCSS()) {
+                container.innerHTML = '<p style="color: red;">❌ CSS not loaded properly!</p>';
+                return;
+            }
+            
+            if (!checkJS()) {
+                container.innerHTML = '<p style="color: red;">❌ JavaScript functions not available!</p>';
+                return;
+            }
+            
+            const testFlights = [
+                {
+                    id: "test_flight_1",
+                    from: "BOM",
+                    to: "BLR", 
+                    airline: "AI",
+                    flightNumber: "AI2607",
+                    aircraft: "32N",
+                    departureTime: "04:40 PM",
+                    departureDate: "19/07/2025",
+                    duration: "1h 55m",
+                    price: 120.6,
+                    currency: "USD",
+                    stops: 0,
+                    class: "ECONOMY"
+                },
+                {
+                    id: "test_flight_2",
+                    from: "DEL",
+                    to: "MUM",
+                    airline: "6E",
+                    flightNumber: "6E2849",
+                    aircraft: "A320",
+                    departureTime: "05:30 PM",
+                    departureDate: "19/07/2025",
+                    duration: "2h 0m",
+                    price: 150.0,
+                    currency: "USD",
+                    stops: 1,
+                    class: "BUSINESS"
+                },
+                {
+                    id: "test_flight_3",
+                    from: "BOS",
+                    to: "CDG",
+                    airline: "AF",
+                    flightNumber: "AF1234",
+                    aircraft: "A350",
+                    departureTime: "10:30 PM",
+                    departureDate: "19/07/2025",
+                    duration: "7h 15m",
+                    price: 850.0,
+                    currency: "USD",
+                    stops: 0,
+                    class: "ECONOMY"
+                }
+            ];
+
+            container.innerHTML = '<h3>Beautiful Flight Cards:</h3>';
+            
+            testFlights.forEach((flight, index) => {
+                try {
+                    let cardHTML;
+                    if (typeof createFlightCard === 'function') {
+                        cardHTML = createFlightCard(flight);
+                    } else if (typeof recommendationsPage !== 'undefined') {
+                        cardHTML = recommendationsPage.createFlightCard(flight);
+                    } else {
+                        throw new Error('No createFlightCard function available');
+                    }
+                    
+                    container.innerHTML += `
+                        <div style="margin-bottom: 20px;">
+                            <h4>Flight ${index + 1}:</h4>
+                            ${cardHTML}
+                        </div>
+                    `;
+                } catch (error) {
+                    container.innerHTML += `
+                        <div style="color: red; margin-bottom: 20px;">
+                            <h4>Flight ${index + 1} Error:</h4>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // Run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(testFlightCards, 100);
+        });
+    </script>
+</body>
+</html> 

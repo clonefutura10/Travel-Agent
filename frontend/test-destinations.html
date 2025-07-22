@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destination Images Test</title>
+    <link rel="stylesheet" href="css/style.css?v=1.1" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body>
+    <div style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+        <h1>Destination Images Test</h1>
+        <p>Testing destination images with fallback system...</p>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <script src="js/api.js?v=3"></script>
+    <script src="js/recommendations.js?v=3"></script>
+    <script>
+        // Test the destination image system
+        async function testDestinationImages() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<h2>Testing Destination Images:</h2>';
+            
+            try {
+                // Test the recommendations API
+                const response = await fetch('http://localhost:8000/api/generate-personalized-recommendations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ageGroup: '18-25',
+                        groupSize: 'solo',
+                        budgetRange: 7000,
+                        tripDuration: 'week',
+                        interests: ['adventure', 'culture'],
+                        country: 'Brazil',
+                        additionalNotes: ''
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const destinations = data.data.destinations;
+
+                resultsDiv.innerHTML += `<p>✅ API Response: ${destinations.length} destinations found</p>`;
+
+                // Test each destination image
+                destinations.forEach((dest, index) => {
+                    const cardHTML = `
+                        <div style="border: 1px solid #ccc; padding: 20px; margin: 20px 0; border-radius: 10px;">
+                            <h3>${dest.name}</h3>
+                            <p><strong>Backend Image URL:</strong> ${dest.image_url}</p>
+                            <img src="${dest.image_url}" alt="${dest.name}" style="width: 300px; height: 200px; object-fit: cover; border-radius: 8px;" 
+                                 onerror="this.src='${getFallbackImage(dest.name)}'; this.style.border='2px solid red'; this.nextElementSibling.textContent='❌ Backend image failed, using fallback';">
+                            <p style="color: green;">✅ Image loaded successfully</p>
+                            <p><strong>Fallback Image URL:</strong> ${getFallbackImage(dest.name)}</p>
+                        </div>
+                    `;
+                    resultsDiv.innerHTML += cardHTML;
+                });
+
+            } catch (error) {
+                resultsDiv.innerHTML += `<p style="color: red;">❌ API Error: ${error.message}</p>`;
+            }
+        }
+
+        // Run the test when page loads
+        testDestinationImages();
+    </script>
+</body>
+</html> 
